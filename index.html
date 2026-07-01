@@ -1029,11 +1029,10 @@
           <span class="menu-item-text">Convertitore</span>
           <span class="badge-soon">Presto</span>
         </div>
-        <div class="menu-item disabled">
+        <a href="/tools/calendar" class="menu-item">
           <span class="menu-item-icon">📅</span>
-          <span class="menu-item-text">Agenda</span>
-          <span class="badge-soon">Presto</span>
-        </div>
+          <span class="menu-item-text">Calendario</span>
+        </a>
         <div class="menu-item disabled">
           <span class="menu-item-icon">📝</span>
           <span class="menu-item-text">Note</span>
@@ -1188,6 +1187,7 @@
     const commandsList = [
       { id: 'standard', name: '🔢 Calcolatrice Standard', desc: 'Passa alla calcolatrice aritmetica standard', keywords: 'standard calc base matematica aritmetica piu meno', action: () => setMode('standard') },
       { id: 'scientific', name: '🧪 Calcolatrice Scientifica', desc: 'Passa alla calcolatrice scientifica avanzata', keywords: 'scientific calc scientifica trigonometria sin cos tan log pi', action: () => setMode('scientific') },
+      { id: 'calendar', name: '📅 Calendario', desc: 'Apri il calendario e l\'agenda', keywords: 'calendario agenda appuntamenti eventi date settimane iso', action: () => window.location.href = '/tools/calendar' },
       { id: 'settings', name: '⚙️ Apri Impostazioni', desc: 'Regola la precisione decimale e vedi le scorciatoie', keywords: 'impostazioni settings precisione decimale tasti scorciatoie', action: () => openSettings() },
       { id: 'clear-hist', name: '🗑️ Cancella Cronologia', desc: 'Svuota la lista dei calcoli recenti', keywords: 'cronologia cancella svuota history reset pulisci', action: () => clearHistory() },
     ];
@@ -2137,6 +2137,7 @@
         let iconHtml = '🧭';
         if (cmd.id === 'standard') iconHtml = '🔢';
         else if (cmd.id === 'scientific') iconHtml = '🧪';
+        else if (cmd.id === 'calendar') iconHtml = '📅';
         else if (cmd.id === 'settings') iconHtml = '⚙️';
         else if (cmd.id === 'clear-hist') iconHtml = '🗑️';
         
