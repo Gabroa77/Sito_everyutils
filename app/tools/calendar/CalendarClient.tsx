@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import {
   CalendarEvent,
   dateToISOKey
@@ -21,14 +22,20 @@ export default function CalendarClient() {
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isMobile, setIsMobile] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  // Persistence
+  // Persistence - Load
   useEffect(() => {
     const savedEvents = localStorage.getItem('everyutils_calendar_events');
     if (savedEvents) {
-      try { setEvents(JSON.parse(savedEvents)); } catch (e) { console.error(e); }
+      try {
+        const parsed = JSON.parse(savedEvents);
+        if (parsed && typeof parsed === 'object') {
+          setEvents(parsed);
+        }
+      } catch (e) { console.error(e); }
     }
     const savedStartDay = localStorage.getItem('everyutils_calendar_startday');
     if (savedStartDay) {
@@ -40,17 +47,24 @@ export default function CalendarClient() {
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
+
+    setIsLoaded(true);
+
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Fix: Save events even if empty
+  // Persistence - Save (Only after loading)
   useEffect(() => {
-    localStorage.setItem('everyutils_calendar_events', JSON.stringify(events));
-  }, [events]);
+    if (isLoaded) {
+      localStorage.setItem('everyutils_calendar_events', JSON.stringify(events));
+    }
+  }, [events, isLoaded]);
 
   useEffect(() => {
-    localStorage.setItem('everyutils_calendar_startday', startDayOfWeek.toString());
-  }, [startDayOfWeek]);
+    if (isLoaded) {
+      localStorage.setItem('everyutils_calendar_startday', startDayOfWeek.toString());
+    }
+  }, [startDayOfWeek, isLoaded]);
 
   // Handlers
   const handlePrev = () => {
@@ -94,7 +108,6 @@ export default function CalendarClient() {
     window.print();
   };
 
-  // Switch to Agenda on mobile automatically if specified
   const effectiveView = (isMobile && view === 'month') ? 'agenda' : view;
 
   return (
@@ -109,10 +122,10 @@ export default function CalendarClient() {
 
         <div className="sidebar-section">
           <div className="section-title">Navigazione</div>
-          <a href="/" className="menu-item">
+          <Link href="/" className="menu-item">
             <span className="menu-item-icon">🏠</span>
             <span className="menu-item-text">Home</span>
-          </a>
+          </Link>
           <div className="menu-item active">
             <span className="menu-item-icon">📅</span>
             <span className="menu-item-text">Calendario</span>
