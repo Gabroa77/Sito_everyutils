@@ -1,174 +1,232 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { parseAndEvaluate, formatResult } from '@/lib/calculator-logic';
+
+const KEY_LAYOUTS: any = {
+  standard: [
+    { label: 'AC', key: 'AC', type: 'clear' },
+    { label: '⌫', key: 'Backspace', type: 'operator' },
+    { label: '%', key: '%', type: 'operator' },
+    { label: '÷', key: '/', type: 'operator' },
+    { label: '7', key: '7', type: 'number' },
+    { label: '8', key: '8', type: 'number' },
+    { label: '9', key: '9', type: 'number' },
+    { label: '×', key: '*', type: 'operator' },
+    { label: '4', key: '4', type: 'number' },
+    { label: '5', key: '5', type: 'number' },
+    { label: '6', key: '6', type: 'number' },
+    { label: '−', key: '-', type: 'operator' },
+    { label: '1', key: '1', type: 'number' },
+    { label: '2', key: '2', type: 'number' },
+    { label: '3', key: '3', type: 'number' },
+    { label: '+', key: '+', type: 'operator' },
+    { label: '±', key: 'pm', type: 'number' },
+    { label: '0', key: '0', type: 'number' },
+    { label: '.', key: '.', type: 'number' },
+    { label: '=', key: 'Enter', type: 'equals' }
+  ],
+  scientific: [
+    { label: 'RAD/DEG', key: 'angle-toggle', type: 'sci-op' },
+    { label: '(', key: '(', type: 'sci-op' },
+    { label: ')', key: ')', type: 'sci-op' },
+    { label: '⌫', key: 'Backspace', type: 'operator' },
+    { label: 'AC', key: 'AC', type: 'clear' },
+    { label: 'sin', key: 'sin', type: 'sci-op' },
+    { label: 'cos', key: 'cos', type: 'sci-op' },
+    { label: 'tan', key: 'tan', type: 'sci-op' },
+    { label: '^', key: '^', type: 'sci-op' },
+    { label: '÷', key: '/', type: 'operator' },
+    { label: 'log', key: 'log', type: 'sci-op' },
+    { label: '7', key: '7', type: 'number' },
+    { label: '8', key: '8', type: 'number' },
+    { label: '9', key: '9', type: 'number' },
+    { label: '×', key: '*', type: 'operator' },
+    { label: 'ln', key: 'ln', type: 'sci-op' },
+    { label: '4', key: '4', type: 'number' },
+    { label: '5', key: '5', type: 'number' },
+    { label: '6', key: '6', type: 'number' },
+    { label: '−', key: '-', type: 'operator' },
+    { label: '√', key: 'sqrt', type: 'sci-op' },
+    { label: '1', key: '1', type: 'number' },
+    { label: '2', key: '2', type: 'number' },
+    { label: '3', key: '3', type: 'number' },
+    { label: '+', key: '+', type: 'operator' },
+    { label: 'π', key: 'pi', type: 'sci-op' },
+    { label: 'e', key: 'e', type: 'sci-op' },
+    { label: '0', key: '0', type: 'number' },
+    { label: '.', key: '.', type: 'number' },
+    { label: '=', key: 'Enter', type: 'equals' }
+  ]
+};
 
 export default function CalculatorPage() {
   const [currentMode, setCurrentMode] = useState('standard');
+  const [angleMode, setAngleMode] = useState('deg');
   const [expression, setExpression] = useState('');
-  const [currentValue, setCurrentValue] = useState('0');
+  const [currentValue, setCurrentValue] = useState('');
+  const [lastResult, setLastResult] = useState('');
+  const [hasEvaluated, setHasEvaluated] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // Persistence
   useEffect(() => {
-    const savedHistory = localStorage.getItem('everyutils_history');
-    if (savedHistory) {
-      try { setHistory(JSON.parse(savedHistory)); } catch (e) {}
+    const saved = localStorage.getItem('everyutils_history');
+    if (saved) {
+      try { setHistory(JSON.parse(saved)); } catch (e) {}
     }
   }, []);
 
-  const handleClear = () => {
-    setExpression('');
-    setCurrentValue('0');
-  };
-
-  // Simplified version of the calculator for the migration
-  // In a real scenario, we would port all the logic from index.html
-  const handleDigit = (digit: string) => {
-    setCurrentValue(prev => prev === '0' ? digit : prev + digit);
-  };
-
-  const handleOperator = (op: string) => {
-    setExpression(currentValue + ' ' + op + ' ');
-    setCurrentValue('0');
+  const onKeyPress = (key: string, label: string) => {
+    if (key === 'AC') {
+      setExpression('');
+      setCurrentValue('');
+      setHasEvaluated(false);
+    } else if (key === 'Backspace') {
+      if (hasEvaluated) { setExpression(''); setCurrentValue(''); setHasEvaluated(false); }
+      else { setCurrentValue(prev => prev.slice(0, -1)); }
+    } else if (key === 'angle-toggle') {
+      setAngleMode(prev => prev === 'deg' ? 'rad' : 'deg');
+    } else if (key === 'Enter') {
+      evaluate();
+    } else if (['sin', 'cos', 'tan', 'log', 'ln', 'sqrt'].includes(key)) {
+      if (hasEvaluated) { setExpression(key + '('); setCurrentValue(''); setHasEvaluated(false); }
+      else { setExpression(prev => prev + (currentValue ? currentValue + ' × ' : '') + key + '('); setCurrentValue(''); }
+    } else if (key === '(' || key === ')') {
+      if (hasEvaluated) { setExpression(key); setCurrentValue(''); setHasEvaluated(false); }
+      else { setExpression(prev => prev + (key === '(' && currentValue ? currentValue + ' × ' : currentValue) + key); setCurrentValue(''); }
+    } else if (['+', '-', '*', '/', '^'].includes(key)) {
+      if (hasEvaluated) { setExpression(lastResult + ' ' + label + ' '); setCurrentValue(''); setHasEvaluated(false); }
+      else if (currentValue !== '') { setExpression(prev => prev + currentValue + ' ' + label + ' '); setCurrentValue(''); }
+    } else if (key === 'pi' || key === 'e') {
+      const val = key === 'pi' ? 'π' : 'e';
+      if (hasEvaluated) { setExpression(val); setCurrentValue(''); setHasEvaluated(false); }
+      else { setExpression(prev => prev + (currentValue ? currentValue + ' × ' : '') + val); setCurrentValue(''); }
+    } else if (key === 'pm') {
+      setCurrentValue(prev => prev.startsWith('-') ? prev.slice(1) : '-' + prev);
+    } else if (key === '%') {
+      if (currentValue) setCurrentValue(String(parseFloat(currentValue) / 100));
+    } else {
+      if (hasEvaluated) { setExpression(''); setCurrentValue(key); setHasEvaluated(false); }
+      else { setCurrentValue(prev => prev === '0' ? key : prev + key); }
+    }
   };
 
   const evaluate = () => {
+    let evalStr = expression + currentValue;
+    if (!evalStr.trim()) return;
     try {
-      // Very basic evaluation for demonstration
-      const res = eval(expression.replace('×', '*').replace('÷', '/') + currentValue);
-      const fullExpr = expression + currentValue + ' =';
-      setExpression(fullExpr);
-      setCurrentValue(String(res));
-      const newHistory = [{ formula: fullExpr, result: String(res) }, ...history].slice(0, 15);
+      const res = parseAndEvaluate(evalStr, angleMode);
+      const formatted = formatResult(res);
+      setExpression(evalStr + ' =');
+      setCurrentValue(formatted);
+      setLastResult(formatted);
+      setHasEvaluated(true);
+      const newHistory = [{ formula: evalStr, result: formatted }, ...history].slice(0, 15);
       setHistory(newHistory);
       localStorage.setItem('everyutils_history', JSON.stringify(newHistory));
     } catch (e) {
-      setCurrentValue('Error');
+      setCurrentValue('Errore');
     }
   };
 
   return (
-    <div className={`app-container ${!isSidebarOpen ? 'sidebar-collapsed' : ''}`}>
+    <div className="app-layout">
       <aside className="sidebar">
-        <div className="workspace-header">
-          <div className="workspace-selector">
-            <span className="workspace-avatar">E</span>
-            <span className="workspace-name">EveryUtils Space</span>
-          </div>
+        <div className="sidebar-header">
+           <div className="logo-box">E</div>
+           <span className="logo-text">EveryUtils</span>
         </div>
-
-        <div className="sidebar-section">
-          <div className="section-title">Strumenti</div>
-          <div className={`menu-item ${currentMode === 'standard' ? 'active' : ''}`} onClick={() => setCurrentMode('standard')}>
-            <span className="menu-item-icon">🔢</span>
-            <span className="menu-item-text">Standard</span>
-          </div>
-          <div className={`menu-item ${currentMode === 'scientific' ? 'active' : ''}`} onClick={() => setCurrentMode('scientific')}>
-            <span className="menu-item-icon">🧪</span>
-            <span className="menu-item-text">Scientifica</span>
-          </div>
-          <Link href="/tools/calendar" className="menu-item">
-            <span className="menu-item-icon">📅</span>
-            <span className="menu-item-text">Calendario</span>
-          </Link>
-        </div>
-
-        <div className="sidebar-section" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
-          <div className="section-title">Cronologia</div>
-          <div className="history-list">
-            {history.length === 0 ? (
-              <div className="no-history">Nessun calcolo recente</div>
-            ) : (
-              history.map((item, idx) => (
-                <div key={idx} className="history-item">
-                  <div className="hist-expr">{item.formula}</div>
-                  <div className="hist-res">= {item.result}</div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+        <nav className="sidebar-nav">
+           <div className="nav-section">
+              <span className="nav-title">Strumenti</span>
+              <div className={`nav-item ${currentMode === 'standard' ? 'active' : ''}`} onClick={() => setCurrentMode('standard')}>🔢 Standard</div>
+              <div className={`nav-item ${currentMode === 'scientific' ? 'active' : ''}`} onClick={() => setCurrentMode('scientific')}>🧪 Scientifica</div>
+              <Link href="/tools/calendar" className="nav-item">📅 Calendario</Link>
+           </div>
+           <div className="nav-section">
+              <span className="nav-title">Cronologia</span>
+              <div className="history-list">
+                 {history.length === 0 ? <div className="no-history">Vuota</div> :
+                   history.map((h, i) => (
+                     <div key={i} className="history-item">
+                        <div className="h-expr">{h.formula}</div>
+                        <div className="h-res">= {h.result}</div>
+                     </div>
+                   ))
+                 }
+              </div>
+           </div>
+        </nav>
       </aside>
 
-      <main className="main-workspace">
-        <header className="workspace-header-bar">
-          <div className="breadcrumbs">
-            <span className="breadcrumb-item">EveryUtils</span>
-            <span className="breadcrumb-separator">/</span>
-            <span className="breadcrumb-item active">
-              {currentMode === 'standard' ? '🔢 Calcolatrice Standard' : '🧪 Calcolatrice Scientifica'}
-            </span>
-          </div>
-        </header>
-
-        <div className="calculator-container">
-          <div className={`calculator-card ${currentMode === 'scientific' ? 'scientific' : ''}`}>
-            <div className="calc-card-header">
-              <span className="calc-mode-title">
-                {currentMode === 'standard' ? '🔢 Calcolatrice Standard' : '🧪 Calcolatrice Scientifica'}
-              </span>
-            </div>
-
-            <div className="calc-display">
-              <div className="calc-expr">{expression || <>&nbsp;</>}</div>
-              <div className="calc-current">{currentValue}</div>
-            </div>
-
-            <div className={`calc-keypad ${currentMode === 'scientific' ? 'scientific' : 'standard'}`}>
-              <button className="calc-btn clear" onClick={handleClear}>AC</button>
-              <button className="calc-btn operator" onClick={() => setCurrentValue(prev => prev.slice(0, -1) || '0')}>⌫</button>
-              <button className="calc-btn operator">%</button>
-              <button className="calc-btn operator" onClick={() => handleOperator('/')}>÷</button>
-
-              {[7, 8, 9].map(n => <button key={n} className="calc-btn" onClick={() => handleDigit(String(n))}>{n}</button>)}
-              <button className="calc-btn operator" onClick={() => handleOperator('*')}>×</button>
-
-              {[4, 5, 6].map(n => <button key={n} className="calc-btn" onClick={() => handleDigit(String(n))}>{n}</button>)}
-              <button className="calc-btn operator" onClick={() => handleOperator('-')}>−</button>
-
-              {[1, 2, 3].map(n => <button key={n} className="calc-btn" onClick={() => handleDigit(String(n))}>{n}</button>)}
-              <button className="calc-btn operator" onClick={() => handleOperator('+')}>+</button>
-
-              <button className="calc-btn">±</button>
-              <button className="calc-btn" onClick={() => handleDigit('0')}>0</button>
-              <button className="calc-btn">.</button>
-              <button className="calc-btn equals" onClick={evaluate}>=</button>
+      <main className="content-area">
+        <div className="page-wrapper">
+          <div className="calculator-container">
+            <div className={`calculator-card ${currentMode === 'scientific' ? 'scientific' : ''}`}>
+              <div className="card-header">
+                 <h3>{currentMode === 'standard' ? '🔢 Calcolatrice Standard' : '🧪 Calcolatrice Scientifica'}</h3>
+                 {currentMode === 'scientific' && (
+                    <div className="mode-badge" onClick={() => setAngleMode(prev => prev === 'deg' ? 'rad' : 'deg')}>
+                       {angleMode.toUpperCase()}
+                    </div>
+                 )}
+              </div>
+              <div className="display-box">
+                 <div className="expr">{expression || <>&nbsp;</>}</div>
+                 <div className="curr">{currentValue || '0'}</div>
+              </div>
+              <div className={`keypad ${currentMode}`}>
+                 {KEY_LAYOUTS[currentMode].map((btn: any) => (
+                    <button
+                       key={btn.key}
+                       className={`btn ${btn.type}`}
+                       onClick={() => onKeyPress(btn.key, btn.label)}
+                    >
+                       {btn.label}
+                    </button>
+                 ))}
+              </div>
             </div>
           </div>
         </div>
       </main>
 
       <style jsx>{`
-        .app-container { display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: var(--sidebar-width); background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
-        .main-workspace { flex-grow: 1; display: flex; flex-direction: column; }
-        .workspace-header-bar { height: 48px; display: flex; align-items: center; padding: 0 24px; border-bottom: 1px solid var(--border-color); }
-        .calculator-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 24px; }
-        .calculator-card { width: 360px; background-color: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 16px; }
+        .app-layout { display: flex; height: 100vh; background-color: #f4f6f8; }
+        .sidebar { width: 240px; background-color: #2c3e50; color: #fff; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .logo-box { width: 32px; height: 32px; background: #3498db; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+        .logo-text { font-size: 18px; font-weight: 700; }
+        .sidebar-nav { padding: 16px; flex-grow: 1; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; }
+        .nav-section { display: flex; flex-direction: column; gap: 4px; }
+        .nav-title { font-size: 10px; text-transform: uppercase; color: rgba(255,255,255,0.4); font-weight: 700; margin-bottom: 8px; }
+        .nav-item { padding: 10px 12px; border-radius: 6px; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; cursor: pointer; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-item.active { background: #3498db; color: #fff; }
+
+        .content-area { flex-grow: 1; overflow-y: auto; }
+        .page-wrapper { padding: 40px; display: flex; justify-content: center; }
+        .calculator-card { width: 360px; background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .calculator-card.scientific { width: 480px; }
-        .calc-display { background-color: var(--bg-sidebar); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; align-items: flex-end; min-height: 100px; }
-        .calc-expr { font-size: 14px; color: var(--text-secondary); }
-        .calc-current { font-size: 36px; font-weight: 500; }
-        .calc-keypad { display: grid; gap: 8px; }
-        .calc-keypad.standard { grid-template-columns: repeat(4, 1fr); }
-        .calc-keypad.scientific { grid-template-columns: repeat(5, 1fr); }
-        .calc-btn { border: 1px solid var(--border-color); background-color: #ffffff; height: 48px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 500; display: flex; align-items: center; justify-content: center; }
-        .calc-btn:hover { background-color: var(--hover-bg); }
-        .calc-btn.operator { background-color: var(--bg-sidebar); }
-        .calc-btn.clear { color: var(--accent-red); }
-        .calc-btn.equals { background-color: var(--accent-color); color: #ffffff; border-color: var(--accent-color); }
-        .menu-item { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 6px; font-size: 14px; cursor: pointer; color: inherit; text-decoration: none; }
-        .menu-item:hover { background-color: var(--hover-bg); }
-        .menu-item.active { background-color: var(--active-bg); font-weight: 500; }
-        .sidebar-section { padding: 10px; }
-        .section-title { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; padding: 6px 12px; }
-        .history-list { padding: 0 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
-        .history-item { display: flex; flex-direction: column; align-items: flex-end; font-size: 12px; }
-        .hist-expr { color: var(--text-secondary); }
-        .hist-res { font-weight: 600; }
-        .no-history { font-size: 12px; color: var(--text-secondary); text-align: center; padding: 10px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .mode-badge { font-size: 10px; font-weight: 700; padding: 4px 8px; background: #eee; border-radius: 4px; cursor: pointer; }
+        .display-box { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; align-items: flex-end; min-height: 100px; }
+        .expr { font-size: 13px; color: #6c757d; }
+        .curr { font-size: 32px; font-weight: 600; color: #212529; }
+        .keypad { display: grid; gap: 8px; margin-top: 16px; }
+        .keypad.standard { grid-template-columns: repeat(4, 1fr); }
+        .keypad.scientific { grid-template-columns: repeat(5, 1fr); }
+        .btn { height: 48px; border: 1px solid #dee2e6; background: #fff; border-radius: 6px; cursor: pointer; font-size: 16px; transition: all 0.1s; }
+        .btn:hover { background: #f8f9fa; }
+        .btn.operator, .btn.sci-op { background: #f1f3f5; font-size: 14px; }
+        .btn.clear { color: #dc3545; }
+        .btn.equals { background: #3498db; color: #fff; border-color: #3498db; }
+        .history-list { display: flex; flex-direction: column; gap: 8px; }
+        .history-item { font-size: 12px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; }
+        .h-expr { color: rgba(255,255,255,0.5); }
+        .h-res { font-weight: 600; }
+        .no-history { font-size: 11px; color: rgba(255,255,255,0.3); text-align: center; }
       `}</style>
     </div>
   );

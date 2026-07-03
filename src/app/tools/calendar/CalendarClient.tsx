@@ -34,7 +34,6 @@ export default function CalendarClient() {
     }
     const savedStartDay = localStorage.getItem('everyutils_calendar_startday');
     if (savedStartDay) setStartDayOfWeek(parseInt(savedStartDay));
-
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -86,54 +85,43 @@ export default function CalendarClient() {
     }));
   };
 
+  const handlePrint = () => { window.print(); };
+
   const effectiveView = (isMobile && view === 'month') ? 'agenda' : view;
 
   return (
-    <div className="app-container">
+    <div className="app-layout">
       <aside className="sidebar">
-        <div className="workspace-header">
-          <div className="workspace-selector">
-            <span className="workspace-avatar">E</span>
-            <span className="workspace-name">EveryUtils Space</span>
-          </div>
+        <div className="sidebar-header">
+          <div className="logo-box">E</div>
+          <span className="logo-text">EveryUtils</span>
         </div>
-        <div className="sidebar-section">
-          <div className="section-title">Navigazione</div>
-          <Link href="/" className="menu-item">
-            <span className="menu-item-icon">🏠</span>
-            <span className="menu-item-text">Home</span>
-          </Link>
-          <div className="menu-item active">
-            <span className="menu-item-icon">📅</span>
-            <span className="menu-item-text">Calendario</span>
+        <nav className="sidebar-nav">
+          <div className="nav-section">
+            <span className="nav-title">Menu Principale</span>
+            <Link href="/" className="nav-item">🏠 Home</Link>
+            <div className="nav-item active">📅 Calendario</div>
           </div>
-        </div>
-        <div className="sidebar-section">
-          <div className="section-title">Impostazioni</div>
-          <div className="settings-control-sidebar">
-            <label className="settings-label">Inizio settimana</label>
-            <select
-              value={startDayOfWeek}
-              onChange={(e) => setStartDayOfWeek(parseInt(e.target.value))}
-              className="settings-select"
-            >
-              <option value={1}>Lunedì</option>
-              <option value={0}>Domenica</option>
-            </select>
+          <div className="nav-section">
+            <span className="nav-title">Opzioni</span>
+            <div className="setting-row">
+              <label>Inizio settimana:</label>
+              <select
+                value={startDayOfWeek}
+                onChange={(e) => setStartDayOfWeek(parseInt(e.target.value))}
+                className="theme-select"
+              >
+                <option value={1}>Lunedì</option>
+                <option value={0}>Domenica</option>
+              </select>
+            </div>
           </div>
-        </div>
+        </nav>
       </aside>
 
-      <main className="main-workspace">
-        <header className="workspace-header-bar">
-          <div className="breadcrumbs">
-            <span className="breadcrumb-item">EveryUtils</span>
-            <span className="breadcrumb-separator">/</span>
-            <span className="breadcrumb-item active">📅 Calendario</span>
-          </div>
-        </header>
-        <div className="calendar-content-wrapper">
-          <div className="calendar-card-full">
+      <main className="content-area">
+        <div className="page-wrapper">
+          <div className="view-card">
             <CalendarHeader
               currentDate={currentDate}
               view={view}
@@ -142,8 +130,9 @@ export default function CalendarClient() {
               onNext={handleNext}
               onToday={() => setCurrentDate(new Date())}
               onDateChange={setCurrentDate}
+              onPrint={handlePrint}
             />
-            <div className="view-container">
+            <div className="view-content">
               {effectiveView === 'month' && <MonthView currentDate={currentDate} startDayOfWeek={startDayOfWeek} events={events} onDayClick={handleDayClick} />}
               {effectiveView === 'week' && <WeekView currentDate={currentDate} startDayOfWeek={startDayOfWeek} events={events} onDayClick={handleDayClick} />}
               {effectiveView === 'day' && <DayView currentDate={currentDate} events={events} onAddEvent={handleDayClick} />}
@@ -156,24 +145,27 @@ export default function CalendarClient() {
 
       {isEventModalOpen && <EventModal date={selectedDate} onClose={() => setIsEventModalOpen(false)} onSave={handleAddEvent} />}
 
-      <style jsx global>{`
-        .app-container { display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: var(--sidebar-width); background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
-        .main-workspace { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        .workspace-header-bar { height: 48px; display: flex; align-items: center; padding: 0 24px; border-bottom: 1px solid var(--border-color); }
-        .calendar-content-wrapper { padding: 24px; flex-grow: 1; display: flex; flex-direction: column; }
-        .calendar-card-full { background-color: #ffffff; border-radius: 12px; padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
-        .menu-item { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; color: inherit; }
-        .menu-item.active { background-color: var(--active-bg); font-weight: 500; }
-        .sidebar-section { padding: 10px; }
-        .section-title { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; padding: 6px 12px; }
-        .settings-control-sidebar { padding: 0 12px; }
-        .settings-select { width: 100%; padding: 4px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 13px; outline: none; }
-        .calc-btn { border: 1px solid var(--border-color); background-color: #ffffff; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color 0.15s; }
-        .calc-btn:hover { background-color: var(--hover-bg); }
-        .segmented-control { background-color: var(--hover-bg); border-radius: 6px; padding: 2px; display: flex; gap: 2px; }
-        .seg-btn { border: none; background: none; font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 4px; cursor: pointer; color: var(--text-secondary); }
-        .seg-btn.active { background-color: #ffffff; color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+      <style jsx>{`
+        .app-layout { display: flex; height: 100vh; background-color: #f4f6f8; }
+        .sidebar { width: 240px; background-color: #2c3e50; color: #fff; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .logo-box { width: 32px; height: 32px; background: #3498db; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+        .logo-text { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+        .sidebar-nav { padding: 16px; flex-grow: 1; display: flex; flex-direction: column; gap: 24px; }
+        .nav-section { display: flex; flex-direction: column; gap: 4px; }
+        .nav-title { font-size: 10px; text-transform: uppercase; color: rgba(255,255,255,0.4); font-weight: 700; margin-bottom: 8px; padding-left: 12px; }
+        .nav-item { padding: 10px 12px; border-radius: 6px; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-item.active { background: #3498db; color: #fff; font-weight: 600; }
+        .setting-row { padding: 0 12px; display: flex; flex-direction: column; gap: 8px; }
+        .setting-row label { font-size: 12px; color: rgba(255,255,255,0.6); }
+        .theme-select { background: #34495e; color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 6px; border-radius: 4px; outline: none; }
+        .content-area { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        .page-wrapper { max-width: 1200px; margin: 0 auto; width: 100%; padding: 40px 24px; }
+        .view-card { background: #ffffff; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }
+        .view-content { padding: 0; }
+        @media (max-width: 768px) { .sidebar { display: none; } .page-wrapper { padding: 20px 12px; } }
+        @media print { .app-layout { background: #fff; } .sidebar { display: none; } .page-wrapper { padding: 0; margin: 0; max-width: none; } .view-card { box-shadow: none; border: none; } }
       `}</style>
     </div>
   );

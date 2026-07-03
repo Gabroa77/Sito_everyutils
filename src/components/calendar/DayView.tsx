@@ -16,115 +16,53 @@ export const DayView: React.FC<DayViewProps> = ({
   const dayEvents = events[isoKey] || [];
 
   return (
-    <div className="day-view-container">
-      <div className="day-card">
-        <header className="day-header">
-          <h2>{formatDateExtended(currentDate)}</h2>
-          <div className="day-stats">
-            <span className="stat-tag">Settimana {getISOWeek(currentDate)}</span>
-            <span className="stat-tag">Giorno {getDayOfYear(currentDate)} del 365</span>
-          </div>
-        </header>
+    <div className="day-detail-view">
+      <div className="day-header-banner">
+         <h2>{formatDateExtended(currentDate)}</h2>
+         <div className="stats-row">
+            <span className="badge">Settimana {getISOWeek(currentDate)}</span>
+            <span className="badge">Giorno {getDayOfYear(currentDate)} dell'anno</span>
+         </div>
+      </div>
 
-        <div className="events-section">
-          <h3>Eventi</h3>
-          {dayEvents.length === 0 ? (
-            <div className="no-events">
-              Nessun evento per oggi.
-              <button className="calc-btn text-btn" onClick={() => onAddEvent(currentDate)}>Aggiungi evento</button>
-            </div>
-          ) : (
-            <div className="events-list">
-              {dayEvents.map(event => (
-                <div key={event.id} className="event-detail">
-                  <div className="event-time">{event.time || '--:--'}</div>
-                  <div className="event-info">
-                    <div className="event-title">{event.title}</div>
-                  </div>
-                </div>
-              ))}
-              <button className="calc-btn text-btn" onClick={() => onAddEvent(currentDate)}>Aggiungi altro</button>
-            </div>
-          )}
-        </div>
+      <div className="day-content">
+         <div className="events-box">
+            <div className="box-title">Eventi in programma</div>
+            {dayEvents.length === 0 ? (
+               <div className="empty-state">
+                  <p>Non ci sono eventi registrati per oggi.</p>
+                  <button className="btn-add" onClick={() => onAddEvent(currentDate)}>Aggiungi ora</button>
+               </div>
+            ) : (
+               <div className="event-list">
+                  {dayEvents.map(event => (
+                     <div key={event.id} className="event-card">
+                        <span className="ev-time">{event.time || '--:--'}</span>
+                        <span className="ev-title">{event.title}</span>
+                     </div>
+                  ))}
+                  <button className="btn-add small" onClick={() => onAddEvent(currentDate)}>+ Aggiungi altro</button>
+               </div>
+            )}
+         </div>
       </div>
 
       <style jsx>{`
-        .day-view-container {
-          display: flex;
-          justify-content: center;
-        }
-        .day-card {
-          width: 100%;
-          max-width: 500px;
-          background-color: #ffffff;
-          border: 1px solid var(--border-color);
-          border-radius: 12px;
-          padding: 24px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .day-header h2 {
-          font-size: 20px;
-          font-weight: 700;
-          margin-bottom: 8px;
-        }
-        .day-stats {
-          display: flex;
-          gap: 8px;
-          margin-bottom: 24px;
-        }
-        .stat-tag {
-          font-size: 11px;
-          background-color: var(--bg-sidebar);
-          padding: 4px 8px;
-          border-radius: 4px;
-          color: var(--text-secondary);
-        }
-        .events-section h3 {
-          font-size: 14px;
-          font-weight: 600;
-          color: var(--text-secondary);
-          text-transform: uppercase;
-          margin-bottom: 12px;
-        }
-        .no-events {
-          text-align: center;
-          padding: 32px;
-          color: var(--text-secondary);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-        }
-        .events-list {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .event-detail {
-          display: flex;
-          gap: 16px;
-          padding: 12px;
-          background-color: var(--bg-sidebar);
-          border-radius: 8px;
-          border-left: 4px solid var(--accent-color);
-        }
-        .event-time {
-          font-size: 13px;
-          font-weight: 600;
-          color: var(--text-primary);
-          min-width: 45px;
-        }
-        .event-title {
-          font-size: 14px;
-          font-weight: 500;
-        }
-        .text-btn {
-          margin-top: 8px;
-          height: 32px;
-          padding: 0 12px;
-          font-size: 13px;
-        }
+        .day-detail-view { display: flex; flex-direction: column; background: #fff; border-radius: 8px; overflow: hidden; }
+        .day-header-banner { padding: 40px; background: #f8f9fa; border-bottom: 1px solid #eee; text-align: center; }
+        .day-header-banner h2 { font-size: 28px; margin-bottom: 12px; color: #2c3e50; }
+        .stats-row { display: flex; gap: 12px; justify-content: center; }
+        .badge { font-size: 12px; font-weight: 700; color: #7f8c8d; background: #ebf0f1; padding: 4px 12px; border-radius: 20px; }
+        .day-content { padding: 40px; max-width: 600px; margin: 0 auto; width: 100%; }
+        .box-title { font-size: 14px; font-weight: 700; text-transform: uppercase; color: #3498db; margin-bottom: 20px; }
+        .empty-state { text-align: center; padding: 40px; border: 2px dashed #eee; border-radius: 8px; }
+        .empty-state p { color: #bdc3c7; margin-bottom: 20px; }
+        .btn-add { background: #3498db; color: #fff; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+        .btn-add.small { background: #f8f9fa; color: #3498db; border: 1px solid #3498db; padding: 8px 16px; margin-top: 20px; }
+        .event-list { display: flex; flex-direction: column; gap: 12px; }
+        .event-card { display: flex; gap: 20px; padding: 16px; background: #fdfdfd; border: 1px solid #eee; border-radius: 6px; border-left: 4px solid #3498db; }
+        .ev-time { font-weight: 800; color: #2c3e50; }
+        .ev-title { font-weight: 500; }
       `}</style>
     </div>
   );

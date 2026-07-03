@@ -9,6 +9,7 @@ interface CalendarHeaderProps {
   onNext: () => void;
   onToday: () => void;
   onDateChange: (date: Date) => void;
+  onPrint: () => void;
 }
 
 export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
@@ -19,6 +20,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   onNext,
   onToday,
   onDateChange,
+  onPrint,
 }) => {
   const views = [
     { id: 'month', label: 'Mese' },
@@ -30,42 +32,34 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
 
   return (
     <div className="calendar-header-container">
-      <div className="view-switcher-row">
-        <div className="segmented-control">
+      <div className="header-top-bar">
+        <h2 className="header-title">
+          {view === 'year' ? currentDate.getFullYear() : `${getMonthName(currentDate.getMonth())} ${currentDate.getFullYear()}`}
+        </h2>
+        <div className="nav-group">
+          <button className="nav-btn" onClick={onPrev}>&laquo;</button>
+          <button className="nav-btn today-btn" onClick={onToday}>Oggi</button>
+          <button className="nav-btn" onClick={onNext}>&raquo;</button>
+        </div>
+      </div>
+
+      <div className="header-bottom-bar">
+        <div className="view-selector">
           {views.map((v) => (
             <button
               key={v.id}
-              className={`seg-btn ${view === v.id ? 'active' : ''}`}
+              className={`view-btn ${view === v.id ? 'active' : ''}`}
               onClick={() => setView(v.id)}
             >
               {v.label}
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="navigation-row">
-        <div className="nav-controls">
-          <button className="calc-btn icon-btn" onClick={onPrev} aria-label="Precedente">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-          </button>
-          <button className="calc-btn text-btn" onClick={onToday}>Oggi</button>
-          <button className="calc-btn icon-btn" onClick={onNext} aria-label="Successivo">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
-        </div>
-
-        <div className="current-selection">
-          <span className="current-date-display">
-            {view === 'year' ? currentDate.getFullYear() : `${getMonthName(currentDate.getMonth())} ${currentDate.getFullYear()}`}
-          </span>
+        <div className="action-group">
+          <button className="icon-btn" onClick={onPrint} title="Stampa o Salva PDF">🖨️</button>
           <input
             type="month"
-            className="date-picker-input"
+            className="month-picker"
             value={`${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`}
             onChange={(e) => {
               const [y, m] = e.target.value.split('-').map(Number);
@@ -77,53 +71,31 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
 
       <style jsx>{`
         .calendar-header-container {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          margin-bottom: 20px;
+          background-color: #ffffff;
+          border-bottom: 1px solid var(--border-color);
+          padding: 16px 24px;
         }
-        .view-switcher-row {
+        .header-top-bar {
           display: flex;
-          justify-content: center;
-        }
-        .navigation-row {
-          display: flex;
-          align-items: center;
           justify-content: space-between;
-          gap: 12px;
-        }
-        .nav-controls {
-          display: flex;
-          gap: 8px;
-        }
-        .icon-btn {
-          width: 36px;
-          height: 36px;
-          padding: 0;
-        }
-        .text-btn {
-          padding: 0 12px;
-          height: 36px;
-          font-size: 14px;
-        }
-        .current-selection {
-          display: flex;
           align-items: center;
-          gap: 8px;
-          position: relative;
+          margin-bottom: 16px;
         }
-        .current-date-display {
-          font-size: 16px;
-          font-weight: 600;
-          color: var(--text-primary);
-        }
-        .date-picker-input {
-          position: absolute;
-          opacity: 0;
-          width: 100%;
-          height: 100%;
-          cursor: pointer;
-        }
+        .header-title { font-size: 22px; font-weight: 700; color: #2c3e50; }
+        .nav-group { display: flex; gap: 4px; }
+        .nav-btn { padding: 6px 12px; border: 1px solid var(--border-color); background-color: #f8f9fa; cursor: pointer; font-weight: 600; border-radius: 4px; }
+        .nav-btn:hover { background-color: var(--hover-bg); }
+        .today-btn { min-width: 60px; }
+        .header-bottom-bar { display: flex; justify-content: space-between; align-items: center; }
+        .view-selector { display: flex; border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; }
+        .view-btn { padding: 8px 16px; border: none; background: #ffffff; cursor: pointer; font-size: 13px; font-weight: 500; border-right: 1px solid var(--border-color); }
+        .view-btn:last-child { border-right: none; }
+        .view-btn.active { background-color: var(--accent-color); color: #ffffff; }
+        .action-group { display: flex; gap: 12px; align-items: center; }
+        .icon-btn { background: none; border: 1px solid var(--border-color); padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .icon-btn:hover { background: #f8f9fa; }
+        .month-picker { padding: 6px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; outline: none; }
+        @media print { .calendar-header-container { border: none; } .view-selector, .action-group, .nav-group { display: none; } .header-top-bar { justify-content: center; } }
       `}</style>
     </div>
   );
