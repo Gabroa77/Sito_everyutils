@@ -1,0 +1,1 @@
+EveryUtils static assets.
