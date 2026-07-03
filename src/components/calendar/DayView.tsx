@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatDateExtended, getISOWeek, getDayOfYear, dateToISOKey, CalendarEvent } from '../../lib/calendar';
+import { formatDateExtended, getISOWeek, getDayOfYear, dateToISOKey, CalendarEvent } from '@/lib/calendar';
 
 interface DayViewProps {
   currentDate: Date;

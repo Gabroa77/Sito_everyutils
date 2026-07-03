@@ -1,5 +1,5 @@
 import React from 'react';
-import { getMonthName } from '../../lib/calendar';
+import { getMonthName } from '@/lib/calendar';
 
 interface CalendarHeaderProps {
   currentDate: Date;

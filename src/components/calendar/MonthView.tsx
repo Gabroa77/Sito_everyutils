@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { getDaysInMonth, getISOWeek, dateToISOKey, CalendarEvent } from '../../lib/calendar';
+import { getDaysInMonth, getISOWeek, dateToISOKey, CalendarEvent } from '@/lib/calendar';
 
 interface MonthViewProps {
   currentDate: Date;

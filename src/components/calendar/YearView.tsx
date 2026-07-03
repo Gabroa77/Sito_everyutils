@@ -1,5 +1,5 @@
 import React from 'react';
-import { getMonthName, getDaysInMonth } from '../../lib/calendar';
+import { getMonthName, getDaysInMonth } from '@/lib/calendar';
 
 interface YearViewProps {
   currentDate: Date;

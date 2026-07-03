@@ -1,5 +1,5 @@
 import React from 'react';
-import { getDaysInWeek, getISOWeek, dateToISOKey, CalendarEvent } from '../../lib/calendar';
+import { getDaysInWeek, getISOWeek, dateToISOKey, CalendarEvent } from '@/lib/calendar';
 
 interface WeekViewProps {
   currentDate: Date;

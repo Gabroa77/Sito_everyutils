@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { formatDateExtended, CalendarEvent } from '../../lib/calendar';
+import { formatDateExtended, CalendarEvent } from '@/lib/calendar';
 
 interface EventModalProps {
   date: Date;

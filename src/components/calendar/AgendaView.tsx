@@ -1,5 +1,5 @@
 import React from 'react';
-import { getDaysInMonth, dateToISOKey, CalendarEvent, getDayName } from '../../lib/calendar';
+import { getDaysInMonth, dateToISOKey, CalendarEvent, getDayName } from '@/lib/calendar';
 
 interface AgendaViewProps {
   currentDate: Date;
