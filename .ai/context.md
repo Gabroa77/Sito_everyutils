@@ -1,19 +1,26 @@
-Versione
+# Current Context
 
-0.3
+Current Version
 
-Ultima feature
+0.1
 
-Calcolatrice
+Current Sprint
 
-In sviluppo
+Initial platform setup
 
-Color Picker
+Completed
 
-Prossima
+- Landing page
 
-JSON Formatter
+In Progress
 
-Debito tecnico
+- AI Software Factory
 
-Separare JS
+Next
+
+- Split HTML
+- Modular architecture
+
+Known Problems
+
+- Monolithic index.html
