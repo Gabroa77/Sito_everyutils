@@ -1,19 +1,18 @@
-Nome
+# EveryUtils
 
-EveryUtils
+## Vision
 
-Mission
+EveryUtils is a modern collection of lightweight web tools.
 
-Creare una raccolta di utility web moderne.
+The project focuses on:
 
-Utente
+- simplicity
+- speed
+- privacy
+- zero installation
 
-Studenti
-Professionisti
-Creator
+Target users:
 
-Obiettivo
-
-Utility veloci
-offline
-responsive
+- developers
+- students
+- professionals
